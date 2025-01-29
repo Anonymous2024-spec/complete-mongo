@@ -4,6 +4,7 @@ const { ObjectId } = require("mongodb");
 
 // init app & middleware
 const app = express();
+app.use(express.json());
 
 // bd connect
 connectToDb((err) => {
@@ -43,4 +44,17 @@ app.get("/books/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Could not fetch the document" });
   }
+});
+
+app.post("/books", (req, res) => {
+  const book = req.body;
+
+  db.collection("books")
+    .insertOne(book)
+    .then((result) => {
+      res.status(201).json(result);
+    })
+    .catch((err) => {
+      res.status(500).json({ err: "Could not create a new document" });
+    });
 });
