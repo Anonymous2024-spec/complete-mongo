@@ -18,9 +18,18 @@ connectToDb((err) => {
 
 // routes
 app.get("/books", async (req, res) => {
+  // current page
+  const page = req.query.p || 0;
+  const booksPerPage = 3;
+
   try {
     let books = [];
-    const cursor = db.collection("books").find().sort({ author: 1 });
+    const cursor = db
+      .collection("books")
+      .find()
+      .sort({ author: 1 })
+      .skip(page * booksPerPage)
+      .limit(booksPerPage);
 
     await cursor.forEach((book) => books.push(book));
 
@@ -57,4 +66,35 @@ app.post("/books", (req, res) => {
     .catch((err) => {
       res.status(500).json({ err: "Could not create a new document" });
     });
+});
+
+app.delete("/book/: id", (res, req) => {
+  if (ObjectId.isValid(req.params.id)) {
+    db.collection("books")
+      .deleteOne({ _id: ObjectId(req.params.id) })
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((err) => {
+        res.status(5000).json({ error: "Could not delete the document" });
+      });
+  } else {
+    res.status(500).json({ error: "Not a valid document" });
+  }
+});
+
+app.patch("/book/: id", (res, req) => {
+  const updates = req.body;
+  if (ObjectId.isValid(req.params.id)) {
+    db.collection("books")
+      .updateOne({ _id: ObjectId(req.params.id) }, { $set: updates })
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((err) => {
+        res.status(5000).json({ error: "Could not update the document" });
+      });
+  } else {
+    res.status(500).json({ error: "Not a valid document" });
+  }
 });
